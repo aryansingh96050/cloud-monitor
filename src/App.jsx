@@ -64,12 +64,43 @@ function App() {
     },
   ]);
 
+  const [networkData, setNetworkData] = useState(() => {
+    const now = new Date();
+    return Array.from({ length: 10 }).map((_, i) => {
+      const time = new Date(now.getTime() - (9 - i) * 3000);
+      return {
+        time: time.toLocaleTimeString("en-US", { hour12: false }),
+        latency: Math.floor(Math.random() * 15) + 15,
+        bandwidth: parseFloat((Math.random() * 1 + 2).toFixed(2)),
+      };
+    });
+  });
+
   useEffect(() => {
     localStorage.setItem(
       "cloudMonitorInstances",
       JSON.stringify(instances)
     );
   }, [instances]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNetworkData((current) => {
+        const now = new Date();
+        const time = now.toLocaleTimeString("en-US", { hour12: false });
+
+        const newPoint = {
+          time,
+          latency: Math.floor(Math.random() * 15) + 15,
+          bandwidth: parseFloat((Math.random() * 1 + 2).toFixed(2)),
+        };
+
+        return [...current.slice(1), newPoint];
+      });
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const addLog = (type, message) => {
     const now = new Date();
@@ -430,6 +461,55 @@ useEffect(() => {
                   <p>{log.message}</p>
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="panel network-panel">
+          <div className="panel-header">
+            <div>
+              <span className="panel-label">NETWORK</span>
+              <h2>Network Monitoring</h2>
+            </div>
+          </div>
+
+          <div className="charts-grid">
+            <div className="chart-box">
+              <h3>Latency (ms)</h3>
+              <ResponsiveContainer width="100%" height={200}>
+                <LineChart data={networkData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#2a2f3a" />
+                  <XAxis dataKey="time" stroke="#8892a0" fontSize={11} />
+                  <YAxis stroke="#8892a0" fontSize={11} />
+                  <Tooltip />
+                  <Line
+                    type="monotone"
+                    dataKey="latency"
+                    stroke="#00d1b2"
+                    strokeWidth={2}
+                    dot={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="chart-box">
+              <h3>Bandwidth (Gbps)</h3>
+              <ResponsiveContainer width="100%" height={200}>
+                <LineChart data={networkData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#2a2f3a" />
+                  <XAxis dataKey="time" stroke="#8892a0" fontSize={11} />
+                  <YAxis stroke="#8892a0" fontSize={11} />
+                  <Tooltip />
+                  <Line
+                    type="monotone"
+                    dataKey="bandwidth"
+                    stroke="#4f8cff"
+                    strokeWidth={2}
+                    dot={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
           </div>
         </section>
