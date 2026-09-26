@@ -35,6 +35,8 @@ const initialInstances = [
 function App() {
   const [region, setRegion] = useState("US-East-1");
   const [activePage, setActivePage] = useState("dashboard");
+  const [instanceSearch, setInstanceSearch] = useState("");
+  const [logSearch, setLogSearch] = useState("");
 
   const [instances, setInstances] = useState(() => {
     const saved = localStorage.getItem("cloudMonitorInstances");
@@ -171,7 +173,27 @@ function App() {
 
     addLog("WARN", `${instance.name} terminated`);
   }
-}; 
+};
+
+const launchInstance = () => {
+  const suffix = Math.floor(Math.random() * 900) + 100;
+  const id = `i-${Math.random().toString(16).slice(2, 10)}`;
+  const name = `new-instance-${suffix}`;
+  const ip = `10.0.${Math.floor(Math.random() * 5) + 4}.${
+    Math.floor(Math.random() * 250) + 2
+  }`;
+
+  const newInstance = {
+    id,
+    name,
+    status: "Running",
+    cpu: Math.floor(Math.random() * 30) + 10,
+    ip,
+  };
+
+  setInstances((currentInstances) => [...currentInstances, newInstance]);
+  addLog("INFO", `${name} launched successfully`);
+};
 useEffect(() => {
   const messages = [
     {
@@ -238,7 +260,19 @@ useEffect(() => {
     (instance) => instance.status === "Running" && instance.cpu > 60
   );
 
-  const instancesTable = (
+  const filteredInstances = instances.filter((instance) => {
+    const query = instanceSearch.toLowerCase();
+    return (
+      instance.name.toLowerCase().includes(query) ||
+      instance.ip.toLowerCase().includes(query)
+    );
+  });
+
+  const filteredLogs = logs.filter((log) =>
+    log.message.toLowerCase().includes(logSearch.toLowerCase())
+  );
+
+  const renderInstancesTable = (list) => (
     <div className="table-wrapper">
       <table>
         <thead>
@@ -252,7 +286,7 @@ useEffect(() => {
         </thead>
 
         <tbody>
-          {instances.map((instance) => (
+          {list.map((instance) => (
             <tr key={instance.id}>
               <td>
                 <strong>{instance.name}</strong>
@@ -331,8 +365,42 @@ useEffect(() => {
               </td>
             </tr>
           ))}
+
+          {list.length === 0 && (
+            <tr>
+              <td colSpan={5} style={{ textAlign: "center", padding: "20px" }}>
+                No instances match your search.
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
+    </div>
+  );
+
+  const renderLogsList = (list) => (
+    <div className="logs">
+      {list.map((log, index) => (
+        <div key={`${log.time}-${index}`}>
+          <time>{log.time}</time>
+
+          <span
+            className={
+              log.type === "WARN" ? "warn" : "info"
+            }
+          >
+            {log.type}
+          </span>
+
+          <p>{log.message}</p>
+        </div>
+      ))}
+
+      {list.length === 0 && (
+        <p style={{ padding: "16px", color: "#8892a0" }}>
+          No logs match your search.
+        </p>
+      )}
     </div>
   );
 
@@ -509,12 +577,12 @@ useEffect(() => {
                     <h2>Instances</h2>
                   </div>
 
-                  <button className="outline-btn">
+                  <button className="outline-btn" onClick={launchInstance}>
                     + Launch Instance
                   </button>
                 </div>
 
-                {instancesTable}
+                {renderInstancesTable(instances)}
               </div>
 
               <div className="panel logs-panel">
@@ -529,23 +597,7 @@ useEffect(() => {
                   </span>
                 </div>
 
-                <div className="logs">
-                  {logs.slice(0, 6).map((log, index) => (
-                    <div key={`${log.time}-${index}`}>
-                      <time>{log.time}</time>
-
-                      <span
-                        className={
-                          log.type === "WARN" ? "warn" : "info"
-                        }
-                      >
-                        {log.type}
-                      </span>
-
-                      <p>{log.message}</p>
-                    </div>
-                  ))}
-                </div>
+                {renderLogsList(logs.slice(0, 6))}
               </div>
             </section>
 
@@ -570,12 +622,21 @@ useEffect(() => {
                 <h2>All Instances</h2>
               </div>
 
-              <button className="outline-btn">
+              <button className="outline-btn" onClick={launchInstance}>
                 + Launch Instance
               </button>
             </div>
 
-            {instancesTable}
+            <div className="search-bar">
+              <input
+                type="text"
+                placeholder="Search by name or IP..."
+                value={instanceSearch}
+                onChange={(event) => setInstanceSearch(event.target.value)}
+              />
+            </div>
+
+            {renderInstancesTable(filteredInstances)}
           </section>
         )}
 
@@ -605,23 +666,16 @@ useEffect(() => {
               </span>
             </div>
 
-            <div className="logs">
-              {logs.map((log, index) => (
-                <div key={`${log.time}-${index}`}>
-                  <time>{log.time}</time>
-
-                  <span
-                    className={
-                      log.type === "WARN" ? "warn" : "info"
-                    }
-                  >
-                    {log.type}
-                  </span>
-
-                  <p>{log.message}</p>
-                </div>
-              ))}
+            <div className="search-bar">
+              <input
+                type="text"
+                placeholder="Search logs..."
+                value={logSearch}
+                onChange={(event) => setLogSearch(event.target.value)}
+              />
             </div>
+
+            {renderLogsList(filteredLogs)}
           </section>
         )}
 

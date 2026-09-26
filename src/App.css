@@ -612,3 +612,36 @@ footer {
 .sidebar nav a {
   cursor: pointer;
 }
+.search-bar {
+  margin: 16px 0;
+}
+
+.search-bar input {
+  width: 100%;
+  max-width: 320px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #2a2f3a;
+  background: #12151c;
+  color: #e4e7eb;
+  font-size: 13px;
+  outline: none;
+}
+
+.search-bar input:focus {
+  border-color: #4f8cff;
+}
+
+.search-bar input::placeholder {
+  color: #8892a0;
+}
+
+.sidebar nav a {
+  cursor: pointer;
+}
+
+@media (max-width: 1000px) {
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+}
